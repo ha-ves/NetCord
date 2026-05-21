@@ -16,7 +16,9 @@
 
 ## 1. 📦 Installation
 
-You can install NetCord packages via NuGet package manager. For the complete and up-to-date list of available packages, refer to the **[Installation Guide](https://netcord.dev/guides/getting-started/installation.html)**.
+You can install NetCord packages via NuGet package manager.
+
+If you are using native dependencies (for example `NetCord.Natives`), check the **[Native Dependencies Installation Guide](https://netcord.dev/guides/basic-concepts/installing-native-dependencies.html)**.
 
 Core packages:
 
