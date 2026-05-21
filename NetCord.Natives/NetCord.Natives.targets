@@ -4,7 +4,7 @@
 	 	    AfterTargets="SetupOSSpecificProps" BeforeTargets="LinkNative">
 
 		<ItemGroup>
-			<!-- Order matters, dependencies comes last -->
+			<!-- Order matters, dependencies come last -->
 			<!-- 1. Top-level application libraries (The Consumers) -->
 			<_NetCordStaticLink Include="libsodium;sodium" 
 								Condition="'%(DirectPInvoke.Identity)' == 'libsodium'" />

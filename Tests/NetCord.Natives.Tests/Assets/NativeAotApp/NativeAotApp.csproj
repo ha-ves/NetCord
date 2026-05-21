@@ -22,7 +22,6 @@
 
 	<ItemGroup>
 		<DirectPInvoke Include="$(NetCordDirectPInvoke)" Condition="'$(NetCordDirectPInvoke)' != ''" />
-		<!-- <PackageReference Include="NetCord.Natives" Version="*" /> -->
 		<ProjectReference Include="$(NetCordNativesDir)\NetCord.Natives.csproj" />
 		<ProjectReference Include="$(NetCordNativesDir)\..\NetCord\NetCord.csproj" />
 	</ItemGroup>
