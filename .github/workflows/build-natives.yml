@@ -92,17 +92,7 @@ jobs:
           dotnet restore Tests/NetCord.Natives.Tests/NetCord.Natives.Tests.csproj -v ${{ env.DotnetVerbose }} ${{ env.GenerateBinLog == 'true' && '-bl:restore.binlog' || '' }}
 
       - name: Build natives projects for ${{ matrix.rid }}
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: > # Building tests will build dependencies including the native libraries
-          dotnet build Tests/NetCord.Natives.Tests/NetCord.Natives.Tests.csproj --no-restore -v ${{ env.DotnetVerbose }} 
-          ${{ env.GenerateBinLog == 'true' && '-bl:build.binlog' || '' }}
-          -p:AppendNativeAotAppProps="RuntimeIdentifier=${{ env.RuntimeIdentifier }}" 
-          -p:GeneratePackageOnBuild=false -p:CI=false
-
-      - name: Build natives projects for ${{ matrix.rid }}
-        if: runner.os != 'Windows'
-        shell: 'nix develop .#natives -c bash -eo pipefail {0}'
+        shell: ${{ runner.os == 'Windows' && 'pwsh' || 'nix develop .#natives -c bash -eo pipefail {0}' }}
         run: > # Building tests will build dependencies including the native libraries
           dotnet build Tests/NetCord.Natives.Tests/NetCord.Natives.Tests.csproj --no-restore -v ${{ env.DotnetVerbose }} 
           ${{ env.GenerateBinLog == 'true' && '-bl:build.binlog' || '' }}
