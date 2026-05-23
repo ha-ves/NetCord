@@ -5,7 +5,11 @@ NetCord relies on several native libraries for high-performance audio processing
 ## Native Dependencies Context
 
 - **Libdave**: Essential for voice connection interactions.
-- **Libsodium**: Used for encryption. NetCord defaults to native AES-GCM, but some voice servers may only support XChaCha20-Poly1305 encryption. On hardware without AES-GCM support, Libsodium is required as a fallback. Without Libsodium, your bot will fail to connect to voice channels on such servers or hardware.
+- **Libsodium**: Used for encryption and provides fallback encryption modes. NetCord attempts to use the platform's native AES-GCM encryption for voice connections. However, Libsodium becomes essential in two scenarios:
+  - **Server-side limitation**: When connecting to a voice channel, Discord assigns you to a voice server. Depending on the server and region, it may or may not support AES-GCM. All voice servers support XChaCha20-Poly1305, so if AES-GCM is unavailable on the server you're assigned to, Libsodium is required to use XChaCha20-Poly1305 as a fallback.
+  - **Hardware limitation**: If your hardware doesn't support AES-GCM (rare but possible on older CPUs), Libsodium is required to provide the XChaCha20-Poly1305 fallback encryption.
+  
+  Without Libsodium, your bot will fail to connect to voice channels if either of these conditions occur.
 - **Opus**: A versatile audio codec required for any classes in NetCord prefixed with `Opus` (e.g., audio encoding/decoding).
 - **Zstd**: Used for efficient payload compression.
 
