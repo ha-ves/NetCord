@@ -38,6 +38,11 @@
 
         dotnetRoot = "${dotnet.unwrapped}/share/dotnet";
 
+        # The modern Nixpkgs approach: inject a single, unified SDK package.
+        darwinPackages = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isDarwin (with pkgs; [
+          libiconv
+          apple-sdk_14
+        ]);
       in
       {
         default = pkgs.mkShell {
@@ -58,7 +63,7 @@
             pkgs.autoconf-archive
             pkgs.automake
             pkgs.libtool
-          ];
+          ] ++ darwinPackages;
           
           DOTNET_ROOT = dotnetRoot;
         };

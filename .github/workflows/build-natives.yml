@@ -141,10 +141,21 @@ jobs:
           -p:GeneratePackageOnBuild=false -p:CI=false
           ${{ matrix.vcpkg-os-target == 'osx' && '-p:InvariantGlobalization=true' || '' }}
       
-      - name: List output directory for ${{ matrix.rid }}
+      - name: List output directory (Nix)
         if: ${{ matrix.use-nix }}
         run: |
           ls -Rlsha Natives/NetCord.Natives.Tests/bin/
+
+      - name: Satisfy Linker Requirements (macOS)
+        if: ${{ matrix.vcpkg-os-target == 'osx' }}
+        run: |
+          # Create a dummy directory and an empty file named libicucore.tbd
+          # This satisfies the linker's hard-coded check for '-licucore'
+          mkdir -p ./.linker-shims
+          touch ./.linker-shims/libicucore.tbd
+          
+          # Export LDFLAGS so the build process sees this path
+          echo "LDFLAGS=-L$PWD/.linker-shims" >> $GITHUB_ENV
 
       - name: Test natives outputs for ${{ matrix.rid }}
         # This will still run if Build succeeds. If Build fails, this is skipped automatically.
