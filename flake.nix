@@ -38,11 +38,15 @@
 
         dotnetRoot = "${dotnet.unwrapped}/share/dotnet";
 
-        # The modern Nixpkgs approach: inject a single, unified SDK package.
+        # Use the full darwin.apple_sdk instead of apple-sdk_14
         darwinPackages = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isDarwin (with pkgs; [
           libiconv
-          apple-sdk_14
+          darwin.apple_sdk
         ]);
+
+        # Compute SDKROOT in a let binding, not inside mkShell
+        sdkRoot = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin
+          "${pkgs.darwin.apple_sdk}/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk";
       in
       {
         default = pkgs.mkShell {
@@ -67,15 +71,14 @@
 
           DOTNET_ROOT = dotnetRoot;
 
-          SDKROOT = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin
-            "${pkgs.darwin.apple_sdk}/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk";
+          # Use the precomputed sdkRoot, not SDKROOT
+          SDKROOT = sdkRoot;
 
-          # Tell clang to use this SDK as the sysroot
           NIX_CFLAGS_COMPILE = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin
-            "-isysroot ${SDKROOT}";
+            "-isysroot ${sdkRoot}";
 
           shellHook = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
-            export SDKROOT="${SDKROOT}"
+            export SDKROOT="${sdkRoot}"
             export LDFLAGS="-F$SDKROOT/System/Library/Frameworks -L$SDKROOT/usr/lib"
             export NIX_LDFLAGS="-F$SDKROOT/System/Library/Frameworks -L$SDKROOT/usr/lib"
             export NIX_CFLAGS_COMPILE="-isysroot $SDKROOT"
