@@ -66,6 +66,12 @@
           ] ++ darwinPackages;
           
           DOTNET_ROOT = dotnetRoot;
+
+          SDKROOT = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "${pkgs.apple-sdk_14}/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk";
+          shellHook = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
+            export LDFLAGS="-F$SDKROOT/System/Library/Frameworks -L$SDKROOT/usr/lib"
+            export NIX_LDFLAGS="-F$SDKROOT/System/Library/Frameworks -L$SDKROOT/usr/lib"
+          '';
         };
 
         docs = pkgs.mkShell {
