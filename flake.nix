@@ -64,13 +64,22 @@
             pkgs.automake
             pkgs.libtool
           ] ++ darwinPackages;
-          
+
           DOTNET_ROOT = dotnetRoot;
 
-          SDKROOT = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "${pkgs.apple-sdk_14}/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk";
+          SDKROOT = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin
+            "${pkgs.darwin.apple_sdk}/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk";
+
+          # Tell clang to use this SDK as the sysroot
+          NIX_CFLAGS_COMPILE = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin
+            "-isysroot ${SDKROOT}";
+
           shellHook = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
+            export SDKROOT="${SDKROOT}"
             export LDFLAGS="-F$SDKROOT/System/Library/Frameworks -L$SDKROOT/usr/lib"
             export NIX_LDFLAGS="-F$SDKROOT/System/Library/Frameworks -L$SDKROOT/usr/lib"
+            export NIX_CFLAGS_COMPILE="-isysroot $SDKROOT"
+            export NIX_CPPFLAGS="-isysroot $SDKROOT"
           '';
         };
 
