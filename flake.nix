@@ -37,6 +37,11 @@
         };
 
         dotnetRoot = "${dotnet.unwrapped}/share/dotnet";
+
+        darwinPackages = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isDarwin (with pkgs; [
+          libiconv
+          apple-sdk
+        ]);
       in
       {
         default = pkgs.mkShell {
@@ -46,6 +51,69 @@
 
           DOTNET_ROOT = dotnetRoot;
         };
+
+        natives = pkgs.mkShell.override {
+          stdenv = if pkgs.clangStdenv.isLinux then
+            pkgs.clangStdenv
+          else pkgs.clangStdenv.override (old: {
+            hostPlatform = old.hostPlatform // { darwinMinVersion = "12.0"; };
+            targetPlatform = old.targetPlatform // { darwinMinVersion = "12.0"; };
+          });
+        } ({
+          packages = [
+            dotnet
+            pkgs.cmake
+            pkgs.ninja
+            pkgs.pkg-config
+            pkgs.autoconf
+            pkgs.autoconf-archive
+            pkgs.automake
+            pkgs.libtool
+          ] ++ darwinPackages;
+
+          DOTNET_ROOT = dotnetRoot;
+
+          VCPKG_FORCE_SYSTEM_BINARIES = "1";
+
+          shellHook = ''
+            export VCPKG_ROOT="$PWD/Natives/NetCord.Natives/vcpkg"
+          '';
+        } // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+          SDKROOT = "${pkgs.apple-sdk}/SDKs/MacOSX.sdk";
+          MACOSX_DEPLOYMENT_TARGET = "12.0";
+          VCPKG_ENV_PASSTHROUGH = "MACOSX_DEPLOYMENT_TARGET,SDKROOT";
+        });
+
+        natives-musl = pkgs.mkShell.override {
+          stdenv = pkgs.pkgsMusl.clangStdenv;
+        } ({
+          packages = [
+            dotnet
+            pkgs.cmake
+            pkgs.ninja
+            pkgs.pkg-config
+            pkgs.autoconf
+            pkgs.autoconf-archive
+            pkgs.automake
+            pkgs.libtool
+          ] ++ darwinPackages;
+
+          DOTNET_ROOT = dotnetRoot;
+
+          TARGET_MUSL = "true";
+
+          VCPKG_OVERLAY_TRIPLETS="${toString ./.}/Natives/NetCord.Natives/triplets";
+
+          VCPKG_FORCE_SYSTEM_BINARIES = "1";
+
+          shellHook = ''
+            export VCPKG_ROOT="$PWD/Natives/NetCord.Natives/vcpkg"
+          '';
+        } // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+          SDKROOT = "${pkgs.apple-sdk}/SDKs/MacOSX.sdk";
+          MACOSX_DEPLOYMENT_TARGET = "12.0";
+          VCPKG_ENV_PASSTHROUGH = "MACOSX_DEPLOYMENT_TARGET,SDKROOT";
+        });
 
         docs = pkgs.mkShell {
           packages = [

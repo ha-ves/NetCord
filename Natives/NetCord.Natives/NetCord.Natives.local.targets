@@ -1,0 +1,37 @@
+<Project>
+
+	<Import Project="NetCord.Natives.targets" Condition="Exists('NetCord.Natives.targets')"	/>
+
+	<Target Name="ProcessNetCordNatives_Local" BeforeTargets="GetNetCordNativesItems">
+	
+		<MSBuild Projects="$(MSBuildThisFileDirectory)\NetCord.Natives.csproj" 
+				 Targets="GetStaticBuildDir"
+				 Properties="CI=false">
+			<Output TaskParameter="TargetOutputs" ItemName="_NetCordStaticDir" />
+		</MSBuild>
+
+		<MSBuild Projects="$(MSBuildThisFileDirectory)\NetCord.Natives.csproj" 
+				 Targets="_AddNativeRuntimeCopyItems"
+				 Properties="CI=false">
+			<Output TaskParameter="TargetOutputs" ItemName="_NetCordRuntimesDir" />
+		</MSBuild>
+
+		<PropertyGroup>
+			<NetCordNativesStaticDir>%(_NetCordStaticDir.Identity)\lib</NetCordNativesStaticDir>
+			<NetCordNativesRuntimesDir Condition="'%(_NetCordRuntimesDir.FullPath)' != ''"
+				>$([System.IO.Path]::GetDirectoryName('%(_NetCordRuntimesDir.FullPath)'))</NetCordNativesRuntimesDir>
+		</PropertyGroup>
+
+	</Target>
+
+	<Target Name="ExcludeStaticLinkedLibPrjCopyPublish" Condition="'$(PublishAot)' == 'true'" 
+			DependsOnTargets="GetNetCordNativesItems"
+			AfterTargets="ComputeResolvedFilesToPublishList"
+			BeforeTargets="ComputeFilesToPublish">
+
+		<ItemGroup>
+			<ResolvedFileToPublish Remove="%(_RunExclude.FullPath)" />
+		</ItemGroup>
+	</Target>
+
+</Project>
