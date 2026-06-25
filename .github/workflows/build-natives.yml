@@ -120,12 +120,15 @@ jobs:
         run: |
           & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
 
-      - name: Authenticate NuGet for vcpkg (Windows Only)
+      - name: Configure Github NuGet Vcpkg Cache (Windows)
         if: ${{ !matrix.use-nix }}
-        run: |
-          $NUGET_PATH = (& "${{ env.VCPKG_ROOT }}/vcpkg.exe" fetch nuget | Select-Object -Last 1)
-          & $NUGET_PATH sources add -Source "${{ env.FEED_URL }}" -Name "vcpkg-cache-feed" -UserName "${{ github.repository_owner }}" -Password "${{ secrets.VCPKG_NUGET_TOKEN }}" -StorePasswordInClearText -ConfigFile "$env:APPDATA\NuGet\NuGet.Config" 2>$null
-          & $NUGET_PATH setapikey "${{ secrets.VCPKG_NUGET_TOKEN }}" -Source "${{ env.FEED_URL }}" -ConfigFile "$env:APPDATA\NuGet\NuGet.Config" 2>$null
+        run: >
+          dotnet nuget add source "${{ env.FEED_URL }}"
+          --name "GitHubPackages"
+          -u "${{ github.repository_owner }}"
+          -p "${{ secrets.VCPKG_NUGET_TOKEN }}"
+          --store-password-in-clear-text
+          --configfile "$env:APPDATA\NuGet\NuGet.Config" || true
 
       - name: Setup vcpkg (Nix)
         if: ${{ matrix.use-nix }}

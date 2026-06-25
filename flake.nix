@@ -63,6 +63,7 @@
           packages = [
             dotnet
             pkgs.nuget
+            pkgs.mono
             pkgs.cmake
             pkgs.ninja
             pkgs.pkg-config
@@ -96,6 +97,7 @@
           packages = [
             dotnet
             pkgs.nuget
+            pkgs.mono
             pkgs.cmake
             pkgs.ninja
             pkgs.pkg-config
