@@ -92,6 +92,8 @@ jobs:
       VcpkgPlatformTarget: ${{ matrix.vcpkg-platform-target }}
       FEED_URL: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json,readwrite"
+      VCPKG_NUGET_REPOSITORY: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+      INPUT_TOKEN: ${{ secrets.VCPKG_NUGET_TOKEN }}
       Configuration: Release
       TargetRID: ${{ matrix.rid }}
       DotnetVerbose: ${{ github.event.inputs.MSBuildVerbosity || inputs.MSBuildVerbosity || 'Minimal' }}
@@ -113,18 +115,17 @@ jobs:
         if: ${{ matrix.use-nix }}
         uses: DeterminateSystems/magic-nix-cache-action@908b263ff629f4cc17666315b7fd3ec127c6244d # v14
 
-      - name: Configure Github NuGet Vcpkg Cache
-        run: >
-          dotnet nuget add source "${{ env.FEED_URL }}"
-          --name "GitHubPackages"
-          -u "${{ github.repository_owner }}"
-          -p "${{ secrets.VCPKG_NUGET_TOKEN }}"
-          --store-password-in-clear-text || true
-
       - name: Setup vcpkg (Windows)
         if: ${{ !matrix.use-nix }}
         run: |
           & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
+
+      - name: Authenticate NuGet for vcpkg (Windows Only)
+        if: ${{ !matrix.use-nix }}
+        run: |
+          $NUGET_PATH = (& "${{ env.VCPKG_ROOT }}/vcpkg.exe" fetch nuget | Select-Object -Last 1)
+          & $NUGET_PATH sources add -Source "${{ env.FEED_URL }}" -Name "vcpkg-cache-feed" -UserName "${{ github.repository_owner }}" -Password "${{ secrets.VCPKG_NUGET_TOKEN }}" -StorePasswordInClearText -ConfigFile "$env:APPDATA\NuGet\NuGet.Config" 2>$null
+          & $NUGET_PATH setapikey "${{ secrets.VCPKG_NUGET_TOKEN }}" -Source "${{ env.FEED_URL }}" -ConfigFile "$env:APPDATA\NuGet\NuGet.Config" 2>$null
 
       - name: Setup vcpkg (Nix)
         if: ${{ matrix.use-nix }}
@@ -218,7 +219,7 @@ jobs:
         if: ${{ env.GenerateBinLog == 'true' && always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ matrix.rid }}-pack-binlogs
+          name: pack-binlogs
           path: |
             *.binlog
 
